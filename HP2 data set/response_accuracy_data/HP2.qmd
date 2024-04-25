@@ -1,0 +1,171 @@
+---
+title: "Nguyen Hp2"
+author: "Ashley Nguyen"
+format: html
+editor: visual
+embed-resources: true
+---
+
+# Introduction
+
+Using Haendler, Yair & Adani, Flavia's data set, they were testing the effect of an arbitrary subject pronoun on relative clause comprehension with Hebrew-speaking children. In order to control, they also tested adults to compare the differences. We're interested to see the difference between adult and children along with the difference between gender and relationship between age and accuracy.
+
+## Questions
+
+What is the difference in fds_bds scores between adult and children?
+
+What is the difference in accuracy between adult and children?
+
+What is the difference between genders?
+
+What is the relationship between age and memory accuracy in adults and children?
+
+## Data Dictionary
+
+id: Subject id variable; A\_ = adult and C\_ = child
+
+age: In months
+
+gender: Female / Male
+
+list: 1 / 2 (the list contain the same items but in a different order)
+
+fds_bds: participants did two memory tests: a forward (fds) and a backward (bds) repetition of digits of varying length. The fds_bds variable is the average score on the two tests
+
+accuracy: dependent variable: 1 is correct answer; 0 is incorrect answer
+
+error_type: 0 is no error (equivalent to 1 in the “accuracy” variable)
+
+1 is distractor error (the participant named the color of the pair of animals that are like the target ones, but on the wrong side of the visual scene)
+
+2 is middle error (the participant named the color of the middle pair of animals)
+
+# Loading in Data
+
+```{r}
+library(tidyverse)
+library(dplyr)
+load("haendler_adani_JCL.RData")
+```
+
+## Data Tidying
+
+It is important for our questions to separate our data frame into 2 parts where adults and children are separated. That way we can compare the two of them. We will do this by creating a new category called "group" and have the two factors be "adults" and "children".
+
+```{r}
+data$group <- factor(ifelse(grepl("A_",data$id),"adults","children"))
+
+data <- select(data, -Stimulus, -condition, -condition_new)
+
+adult_data <- filter(data, group == "adults")
+child_data <- filter(data, group == "children")
+```
+
+# What is the difference in fds_bds scores between adult and children?
+
+To answer our first question, "What is the difference in fds_bds scores between adult and children?", we will find the mean fds_bds between each group and compare them. Under the fds_bds category participants did two memory tests: a forward (fds) and a backward (bds) repetition of digits of varying length. The fds_bds variable is the average score on the two tests. This is significant as I believe there should be a drastic difference between adult and child as adults language development and frontal lobe is fully developed where as the children language development and brain development are still developing. We see in the table below that adults do have a mean score of 5.15 and children have a mean score of 2.27. Making a difference of 2.88 between the two groups. See figure 1 for a plot.
+
+## Table
+
+```{r}
+mean_fds_bds_adult <- mean(adult_data$fds_bds)
+mean_fds_bds_child <- mean(child_data$fds_bds)
+
+mean_scores <- data.frame(
+  group = c("Adult", "Child"),
+  Mean_FDS_BDS = c(mean_fds_bds_adult, mean_fds_bds_child))
+
+print(mean_scores)
+
+```
+
+## Figure 1
+
+```{r}
+Figure_1 <- ggplot(data, aes(x = group, y = fds_bds, fill = group)) +
+  geom_boxplot() +
+  labs(title = "FDS_BDS scores for Adults and Children",
+       x = "Age Group",
+       y = "FDS_BDS Score") +
+  scale_fill_manual(values = c("green", "purple"))
+
+print(Figure_1)
+
+```
+
+# What is the difference in accuracy between adult and children?
+
+Using the same data frame for adult and children, we will find the difference in accuracy between adult and children. Since we know that adults had a better average in fds_bds than children, we should assume that their accuracy is also better than children. Accuracy is the dependent variable where 1 is correct answer and 0 is incorrect answer.
+
+## Figure 2
+
+```{r}
+figure_2 <- ggplot(adult_data, aes(x = accuracy)) +
+  geom_bar() +
+  labs(title = "Accuracy Categories for Adults",
+       x = "Accuracy") +
+  theme_minimal()
+
+print(figure_2)
+```
+
+## Figure 3
+
+```{r}
+figure_3 <- ggplot(child_data, aes(x = accuracy)) +
+  geom_bar() +
+  labs(title = "Accuracy Categories for Children",
+       x = "Accuracy") +
+  theme_minimal()
+
+print(figure_3)
+```
+
+We see that adults had more accuracy than children. In figure 2, there is way more adults that scored correct (1) than incorrect (0). In figure 3, there is a balance between children that scored correct (1) than incorrect (0).
+
+# Is there a difference between genders?
+
+Now that we have seen the differences between adults and children. I wanted to see the difference between female and male in fds_bds, if any. In this data frame, they only categorize genders as female and male. I do not think there will be a drastic difference as I do not believe there's a drastic language differences between female and male. It's important that we make this graph and show that there are truly no differences as we live in a world where people truly think there are males that are better than female. As we can see in figure 4, females perform better than males but only slightly.
+
+## Figure 4
+
+```{r}
+summary_data <- data %>%
+  group_by(gender) %>%
+  summarise(
+    Mean_fds_bds = mean(fds_bds),
+    Median_fds_bds = median(fds_bds),
+    SD_fds_bds = sd(fds_bds))
+
+figure_4 <- ggplot(summary_data, aes(x = gender, y = Mean_fds_bds, fill = gender)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Mean fds_bds Scores by Gender",
+       x = "Gender",
+       y = "Mean fds_bds Score") +
+  scale_fill_manual(values = c("pink","blue"))
+
+print(figure_4)
+```
+
+# 
+
+# What is the relationship between age and memory accuracy in adults and children?
+
+Following the last question, I was curious to see the relationship between age and accuracy in adults and children. As we saw with out last question, we saw that adults did better than children, but that doesn't necessarily confirm there is a relationship between the two. In figure 4, we see that the relationship between age and memory accuracy in adults and children is a positive relationship where as age increases, age also increases.
+
+## Figure 5
+
+```{r}
+Figure_5 <- ggplot(data, aes(x = age, y = accuracy, color = gender)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Relationship between Age and Memory Accuracy",
+       x = "Age (months)", y = "Accuracy") +
+  theme_minimal()
+
+print(Figure_5)
+```
+
+# Conclusion
+
+In conclusion we see that there is a drastic difference between adults and children in fds_bds scores and accuracy where adults performed better than children. We then concluded that there were truly no differences between genders in terms of accuracy which is important to identify that no gender is superior over the over in terms of comprehension. Lastly we found relationship between age and memory accuracy in adults and children where as age increases, age also increases.
